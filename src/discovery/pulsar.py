@@ -64,13 +64,16 @@ class Pulsar:
         pass
 
     def __str__(self):
-        return f'<Pulsar {self.name}: {len(self.residuals)} res, {self.Mmat.shape[1]} pars>'
+        try:
+            return f'<Pulsar {self.name}: {len(self.residuals)} res, {self.Mmat.shape[1]} pars>'
+        except:
+            return f'<Pulsar {self.name}: {len(self.residuals)} res, 0 pars>'
 
     def __repr__(self):
         return str(self)
 
     @classmethod
-    def read_feather(cls, filename):
+    def read_feather(cls, filename, json_metadata=True):
         f = pyarrow.feather.read_table(filename)
         self = Pulsar()
 
@@ -80,28 +83,43 @@ class Pulsar:
 
         for array in Pulsar.vector_columns:
             cols = [c for c in f.column_names if c.startswith(array)]
-            setattr(self, array, np.array([f[col].to_numpy() for col in cols]).swapaxes(0,1).copy())
+            if len(cols) > 0:
+                setattr(self, array, np.array([f[col].to_numpy() for col in cols]).swapaxes(0,1).copy())
 
         for array in Pulsar.tensor_columns:
-            rows = sorted(set(['_'.join(c.split('_')[:-1]) for c in f.column_names if c.startswith(array)]))
-            cols = [[c for c in f.column_names if c.startswith(row)] for row in rows]
-            setattr(self, array,
-                    np.array([[f[col].to_numpy() for col in row] for row in cols]).swapaxes(0,2).swapaxes(1,2).copy())
+            if array in f.column_names:
+                rows = sorted(set(['_'.join(c.split('_')[:-1]) for c in f.column_names if c.startswith(array)]))
+                cols = [[c for c in f.column_names if c.startswith(row)] for row in rows]
+                setattr(self, array,
+                        np.array([[f[col].to_numpy() for col in row] for row in cols]).swapaxes(0,2).swapaxes(1,2).copy())
 
         self.flags = {}
         for array in [c for c in f.column_names if c.startswith('flags_')]:
             self.flags['_'.join(array.split('_')[1:])] = f[array].to_numpy().astype('U')
 
-        meta = json.loads(f.schema.metadata[b'json'])
+        if json_metadata:
+            meta = json.loads(f.schema.metadata[b'json'])
 
-        for attr in Pulsar.metadata:
-            if attr in meta:
-                setattr(self, attr, meta[attr])
-            # else:
-            #     print(f'Pulsar.read_feather: cannot find {attr} in feather file {filename}.')
+            for attr in Pulsar.metadata:
+                if attr in meta:
+                    setattr(self, attr, meta[attr])
+                # else:
+                #     print(f'Pulsar.read_feather: cannot find {attr} in feather file {filename}.')
 
-        if 'noisedict' in meta:
-            setattr(self, 'noisedict', meta['noisedict'])
+            if 'noisedict' in meta:
+                setattr(self, 'noisedict', meta['noisedict'])
+
+        else:
+            meta = f.schema.metadata
+            # print(meta)
+            
+            for attr in Pulsar.metadata:
+                attr_bytes = attr.encode('utf-8')
+                if attr_bytes in meta:
+                    setattr(self, attr, meta[attr_bytes].decode('utf-8'))
+
+            if 'noisedict'.encode('utf-8') in meta:
+                setattr(self, 'noisedict', str(meta['noisedict'.encode('utf-8')]))
 
         setattr(self, 'mintoa', np.min(self.toas))
         setattr(self, 'maxtoa', np.max(self.toas))
