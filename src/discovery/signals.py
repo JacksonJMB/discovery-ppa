@@ -1,3 +1,4 @@
+import sys
 import os
 import re
 import inspect
@@ -204,7 +205,7 @@ def makegp_ecorr_simple(psr, noisedict={}):
         def getphi(params):
             return (10.0**(2.0 * params[log10_ecorr])) * ones
         getphi.params = params
-
+        
         return matrix.VariableGP(matrix.NoiseMatrix1D_var(getphi), Umat)
 
 # nanograv backends
@@ -453,6 +454,7 @@ def makegp_fourier(psr, prior, components, T=None, mean=None, fourierbasis=fouri
 
     # f, df = matrix.jnparray(f), matrix.jnparray(df)
     def priorfunc(params):
+        print(params)
         return prior(f, df, *[params[arg] for arg in argmap])
     priorfunc.params = argmap
     priorfunc.type = getattr(prior, 'type', None)
@@ -469,7 +471,9 @@ def makegp_fourier(psr, prior, components, T=None, mean=None, fourierbasis=fouri
 
     gp = matrix.VariableGP(matrix.NoiseMatrix12D_var(priorfunc), fmatfunc if callable(fmat) else fmat)
     gp.index = {f'{psr.name}_{name}_coefficients({len(f)})': slice(0,len(f))} # better for cosine
-    gp.name, gp.pos = psr.name, psr.pos
+    gp.name = psr.name
+    if hasattr(psr, "pos"):
+        gp.pos = psr.pos
     gp.gpname, gp.gpcommon = name, common
 
     if mean is not None:
