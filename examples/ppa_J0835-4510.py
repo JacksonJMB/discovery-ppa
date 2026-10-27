@@ -56,7 +56,9 @@ def numpyro_model():
 
 mcmc = infer.MCMC(infer.NUTS(numpyro_model), num_chains=4,
                      num_warmup=25, num_samples=25)
-mcmc.run(jax.random.PRNGKey(42))
+mcmc.warmup(jax.random.PRNGKey(42))
+            # init_params=)
+mcmc.run([jax.random.PRNGKey(43+i) for i in range(n_chains)])
 
 samples = mcmc.get_samples()
 

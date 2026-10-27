@@ -635,6 +635,20 @@ class NoiseMatrixSM_var(NoiseMatrix, VariableKernel):
 
         return solve_12d
 
+    def make_sample(self):
+        getN = self.getN
+
+        # closes on getN
+        def sample(key, params):
+            N12 = jnp.sqrt(getN(params))
+
+            key, subkey = jnpsplit(key)
+            return key, jnpnormal(subkey, N12.shape) * N12
+
+        sample.params = getN.params
+
+        return sample
+
 
 
 class NoiseMatrix1D_var(NoiseMatrix, VariableKernel):
