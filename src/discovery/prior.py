@@ -18,10 +18,10 @@ def uniform(par, a, b):
 
 priordict_standard = {
     "(.*_)?efac": [0.1, 10],
-    "(.*_)?t2equad": [-8.5, -5],
-    "(.*_)?tnequad": [-8.5, -5],
-    "(.*_)?log10_ecorr": [-8.5, -5],
-    "(.*_)?rednoise_log10_A.*": [-20, -11],
+    "(.*_)?t2equad": [-3.5, -1.5],#[-8.5, -5],
+    "(.*_)?tnequad": [-4, -2],#[-8.5, -5],
+    "(.*_)?log10_ecorr": [-3, -1],#[-8.5, -5],
+    "(.*_)?rednoise_log10_A.*": [-10,-8],#[-20, -11],
     "(.*_)?rednoise_gamma.*": [0, 7],
     "(.*_)?rednoise_log10_fb.*": [-9, -6],
     "(.*_)?red_noise_log10_A.*": [-20, -11],  # deprecated
@@ -35,6 +35,7 @@ priordict_standard = {
     "gw_(.*_)?log10_A": [-18, -11],
     "gw_(.*_)?gamma": [0, 7],
     "gw_log10_fb": [-9, -6],
+
     "(.*_)?dmgp_log10_A": [-20, -11],
     "(.*_)?dmgp_gamma": [0, 7],
     "(.*_)?dmgp_alpha": [1, 3],
@@ -47,6 +48,12 @@ priordict_standard = {
     "(.*_)?chrom_gp_log10_A": [-20, -11],
     "(.*_)?chrom_gp_gamma": [0, 7],
     "(.*_)?chrom_gp_alpha": [2.5, 14],  # scattering noise. Should be steeper than DM
+
+    "(.*_)?rmgp_log10_A": [-9, -7],
+    "(.*_)?rmgp_gamma": [0, 2],
+    "(.*_)?rm_gp_log10_A": [-9, -7],
+    "(.*_)?rm_gp_gamma": [0, 2],
+
     "crn_log10_rho": [-9, -4],
     "gw_(.*_)?log10_rho": [-9, -4],
     r"(.*_)?red_noise_log10_rho\(([0-9]*)\)": [-9, -4],

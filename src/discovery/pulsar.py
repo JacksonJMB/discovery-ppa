@@ -52,7 +52,7 @@ def save_chain(df, filename):
 class Pulsar:
     # notes: currently ignores _isort/__isort and gets sorted versions
 
-    columns = ['toas', 'stoas', 'toaerrs', 'residuals', 'freqs', 'backend_flags']
+    columns = ['obsnames', 'toas', 'stoas', 'toaerrs', 'residuals', 'freqs', 'backend_flags', 'subbands']
     vector_columns = ['Mmat', 'sunssb', 'pos_t']
     tensor_columns = ['planetssb']
     # flags are done separately

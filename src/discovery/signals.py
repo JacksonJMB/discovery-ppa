@@ -282,7 +282,9 @@ def makegp_ecorr(psr, noisedict={}, enterprise=False, scale=1.0, selection=selec
 
         gp = matrix.VariableGP(matrix.NoiseMatrix1D_var(getphi), Umatall)
         gp.index = {f'{psr.name}_{name}_coefficients({Umatall.shape[1]})': slice(0,Umatall.shape[1])} # better for cosine
-        gp.name, gp.pos = psr.name, psr.pos
+        gp.name = psr.name
+        if hasattr(psr, "pos"):
+            gp.pos = psr.pos
         gp.gpname, gp.gpcommon = name, []
 
         return gp
@@ -454,7 +456,6 @@ def makegp_fourier(psr, prior, components, T=None, mean=None, fourierbasis=fouri
 
     # f, df = matrix.jnparray(f), matrix.jnparray(df)
     def priorfunc(params):
-        print(params)
         return prior(f, df, *[params[arg] for arg in argmap])
     priorfunc.params = argmap
     priorfunc.type = getattr(prior, 'type', None)
