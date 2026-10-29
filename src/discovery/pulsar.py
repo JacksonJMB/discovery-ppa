@@ -124,6 +124,8 @@ class Pulsar:
         setattr(self, 'mintoa', np.min(self.toas))
         setattr(self, 'maxtoa', np.max(self.toas))
 
+        setattr(self, 'obsnames_unique', pd.unique(self.obsnames))
+
         return self
 
     to_list = lambda a: a.tolist() if isinstance(a, np.ndarray) else a

@@ -73,7 +73,7 @@ def selection_backend_flags(psr):
     return psr.backend_flags
 
 
-def makenoise_measurement(psr, noisedict={}, scale=1.0, tnequad=False, ecorr=False selection=selection_backend_flags, vectorize=True,
+def makenoise_measurement(psr, noisedict={}, scale=1.0, tnequad=False, ecorr=False, selection=selection_backend_flags, vectorize=True,
                           outliers=False, enterprise=False):
     backend_flags = selection(psr)
     backends = [b for b in sorted(set(backend_flags)) if b != '']
@@ -163,98 +163,101 @@ def makenoise_measurement(psr, noisedict={}, scale=1.0, tnequad=False, ecorr=Fal
             return matrix.NoiseMatrix1D_var(getnoise)
 
 
-def makenoise_measurement_erm(psr, noisedict={}, scale=1.0, tnequad=False, ecorr=False, fref=1400.0, selection=selection_backend_flags, vectorize=True,
-                          outliers=False, enterprise=False):
-    """Adds extra RM/DM (RM/DM white noise)"""
+# def makenoise_measurement_erm(psr, noisedict={}, scale=1.0, tnequad=False, ecorr=False, fref=1400.0, selection=selection_backend_flags, vectorize=True,
+#                           outliers=False, enterprise=False):
+#     """Adds extra RM/DM (RM/DM white noise)"""
     
-    backend_flags = selection(psr)
-    backends = [b for b in sorted(set(backend_flags)) if b != '']
+#     backend_flags = selection(psr)
+#     backends = [b for b in sorted(set(backend_flags)) if b != '']
 
-    efacs = [f'{psr.name}_{backend}_efac' for backend in backends]
-    if tnequad:
-        log10_tnequads = [f'{psr.name}_{backend}_log10_tnequad' for backend in backends]
-        params = efacs + log10_tnequads
-    else:
-        log10_t2equads = [f'{psr.name}_{backend}_log10_t2equad' for backend in backends]
-        params = efacs + log10_t2equads
-    log10_erm = f'{psr.name}_log10_erm'
-    params.append(log10_erm)
+#     efacs = [f'{psr.name}_{backend}_efac' for backend in backends]
+#     if tnequad:
+#         log10_tnequads = [f'{psr.name}_{backend}_log10_tnequad' for backend in backends]
+#         params = efacs + log10_tnequads
+#     else:
+#         log10_t2equads = [f'{psr.name}_{backend}_log10_t2equad' for backend in backends]
+#         params = efacs + log10_t2equads
+#     log10_erm = f'{psr.name}_log10_erm'
+#     params.append(log10_erm)
 
-    masks = [(backend_flags == backend) for backend in backends]
-    logscale = np.log10(scale)
+#     masks = [(backend_flags == backend) for backend in backends]
+#     logscale = np.log10(scale)
 
-    # scale each toa individually. register scales as a parameter
-    if outliers:
-        toaerr_scaling = f'{psr.name}_alpha_scaling({psr.toas.size})'
-        params.append(toaerr_scaling)
+#     # scale each toa individually. register scales as a parameter
+#     if outliers:
+#         toaerr_scaling = f'{psr.name}_alpha_scaling({psr.toas.size})'
+#         params.append(toaerr_scaling)
 
-    if all(par in noisedict for par in params):
-        if outliers:
-            raise ValueError("No outlier scaling if white noise is fixed.")
-        if tnequad:
-            noise = sum(mask * (noisedict[efac]**2 * (scale * psr.toaerrs)**2 + 10.0**(2 * (logscale + noisedict[log10_tnequad]))  + 10.0**(2 * (logscale + noisedict[log10_erm])))
-                        for mask, efac, log10_tnequad in zip(masks, efacs, log10_tnequads))
-        else:
-            noise = sum(mask * noisedict[efac]**2 * ((scale * psr.toaerrs)**2 + 10.0**(2 * (logscale + noisedict[log10_t2equad])))
-                        for mask, efac, log10_t2equad in zip(masks, efacs, log10_t2equads))
+#     if all(par in noisedict for par in params):
+#         if outliers:
+#             raise ValueError("No outlier scaling if white noise is fixed.")
+#         if tnequad:
+#             noise = sum(mask * (noisedict[efac]**2 * (scale * psr.toaerrs)**2 + 10.0**(2 * (logscale + noisedict[log10_tnequad])) )# + 10.0**(2 * (logscale + noisedict[log10_erm])) * (fref**4/()))
+#                         for mask, efac, log10_tnequad in zip(masks, efacs, log10_tnequads))
+#         else:
+#             noise = sum(mask * noisedict[efac]**2 * ((scale * psr.toaerrs)**2 + 10.0**(2 * (logscale + noisedict[log10_t2equad])))
+#                         for mask, efac, log10_t2equad in zip(masks, efacs, log10_t2equads))
 
-        if ecorr:
-            egp = makegp_ecorr(psr, noisedict=noisedict, enterprise=enterprise, scale=scale, selection=selection)
-            return matrix.NoiseMatrixSM_novar(noise, egp.F, egp.Phi.N)
-        else:
-            return matrix.NoiseMatrix1D_novar(noise)
-    else:
-        if vectorize:
-            toaerrs2, masks = matrix.jnparray(scale**2 * psr.toaerrs**2), matrix.jnparray([mask for mask in masks])
+#         if ecorr:
+#             egp = makegp_ecorr(psr, noisedict=noisedict, enterprise=enterprise, scale=scale, selection=selection)
+#             return matrix.NoiseMatrixSM_novar(noise, egp.F, egp.Phi.N)
+#         else:
+#             return matrix.NoiseMatrix1D_novar(noise)
+#     else:
+#         if vectorize:
+#             toaerrs2, masks = matrix.jnparray(scale**2 * psr.toaerrs**2), matrix.jnparray([mask for mask in masks])
 
-            if tnequad:
-                def getnoise(params):
-                    if outliers:
-                        alpha_scaling = params[toaerr_scaling]
-                    else:
-                        alpha_scaling = 1.0
-                    efac2  = matrix.jnparray([params[efac]**2 for efac in efacs])
-                    equad2 = matrix.jnparray([10.0**(2 * (logscale + params[log10_tnequad])) for log10_tnequad in log10_tnequads])
+#             if tnequad:
+#                 def getnoise(params):
+#                     if outliers:
+#                         alpha_scaling = params[toaerr_scaling]
+#                     else:
+#                         alpha_scaling = 1.0
+#                     efac2  = matrix.jnparray([params[efac]**2 for efac in efacs])
+#                     equad2 = matrix.jnparray([10.0**(2 * (logscale + params[log10_tnequad])) for log10_tnequad in log10_tnequads])
 
-                    return (masks * (efac2[:,jnp.newaxis] * (alpha_scaling*toaerrs2)[jnp.newaxis,:] + equad2[:,jnp.newaxis])).sum(axis=0)
-            else:
+#                     return (masks * (efac2[:,jnp.newaxis] * (alpha_scaling*toaerrs2)[jnp.newaxis,:] + equad2[:,jnp.newaxis])).sum(axis=0)
+#             else:
 
-                def getnoise(params):
-                    if outliers:
-                        alpha_scaling = params[toaerr_scaling]
-                    else:
-                        alpha_scaling = 1.0
-                    efac2  = matrix.jnparray([params[efac]**2 for efac in efacs])
-                    equad2 = matrix.jnparray([10.0**(2 * (logscale + params[log10_t2equad])) for log10_t2equad in log10_t2equads])
+#                 def getnoise(params):
+#                     if outliers:
+#                         alpha_scaling = params[toaerr_scaling]
+#                     else:
+#                         alpha_scaling = 1.0
+#                     efac2  = matrix.jnparray([params[efac]**2 for efac in efacs])
+#                     equad2 = matrix.jnparray([10.0**(2 * (logscale + params[log10_t2equad])) for log10_t2equad in log10_t2equads])
 
-                    return (masks * efac2[:,jnp.newaxis] * ((alpha_scaling*toaerrs2)[jnp.newaxis,:] + equad2[:,jnp.newaxis])).sum(axis=0)
-        else:
-            toaerrs, masks = matrix.jnparray(scale * psr.toaerrs), [matrix.jnparray(mask) for mask in masks]
-            if tnequad:
-                def getnoise(params):
-                    if outliers:
-                        alpha_scaling = params[toaerr_scaling]
-                    else:
-                        alpha_scaling = 1.0
+#                     return (masks * efac2[:,jnp.newaxis] * ((alpha_scaling*toaerrs2)[jnp.newaxis,:] + equad2[:,jnp.newaxis])).sum(axis=0)
+#         else:
+#             toaerrs, masks = matrix.jnparray(scale * psr.toaerrs), [matrix.jnparray(mask) for mask in masks]
+#             if tnequad:
+#                 def getnoise(params):
+#                     if outliers:
+#                         alpha_scaling = params[toaerr_scaling]
+#                     else:
+#                         alpha_scaling = 1.0
 
-                    return sum(mask * (params[efac]**2 * (alpha_scaling * toaerrs**2) + 10.0**(2 * (logscale + params[log10_tnequad])))
-                               for mask, efac, log10_tnequad in zip(masks, efacs, log10_tnequads))
-            else:
-                def getnoise(params):
-                    if outliers:
-                        alpha_scaling = params[toaerr_scaling]
-                    else:
-                        alpha_scaling = 1.0
-                    return sum(mask * params[efac]**2 * (alpha_scaling * toaerrs**2 + 10.0**(2 * (logscale + params[log10_t2equad])))
-                               for mask, efac, log10_t2equad in zip(masks, efacs, log10_t2equads))
+#                     return sum(mask * (params[efac]**2 * (alpha_scaling * toaerrs**2) + 10.0**(2 * (logscale + params[log10_tnequad])))
+#                                for mask, efac, log10_tnequad in zip(masks, efacs, log10_tnequads))
+#             else:
+#                 def getnoise(params):
+#                     if outliers:
+#                         alpha_scaling = params[toaerr_scaling]
+#                     else:
+#                         alpha_scaling = 1.0
+#                     return sum(mask * params[efac]**2 * (alpha_scaling * toaerrs**2 + 10.0**(2 * (logscale + params[log10_t2equad])))
+#                                for mask, efac, log10_t2equad in zip(masks, efacs, log10_t2equads))
 
-        getnoise.params = params
+#         getnoise.params = params
 
-        if ecorr:
-            egp = makegp_ecorr(psr, noisedict={}, enterprise=enterprise, scale=scale, selection=selection)
-            return matrix.NoiseMatrixSM_var(getnoise, egp.F, egp.Phi.getN)
-        else:
-            return matrix.NoiseMatrix1D_var(getnoise)
+#         if ecorr:
+#             egp = makegp_ecorr(psr, noisedict={}, enterprise=enterprise, scale=scale, selection=selection)
+#             # print(getnoise, egp.F, egp.Phi.getN)
+#             # to_return = matrix.NoiseMatrixSM_var(getnoise, egp.F, egp.Phi.getN)
+#             # print(to_return.getN, to_return.F, to_return.getP)
+#             return matrix.NoiseMatrixSM_var(getnoise, egp.F, egp.Phi.getN)
+#         else:
+#             return matrix.NoiseMatrix1D_var(getnoise)
 
 
 # ECORR
@@ -298,6 +301,29 @@ def makegp_ecorr_simple(psr, noisedict={}):
         ones = matrix.jnparray(ones)
         def getphi(params):
             return (10.0**(2.0 * params[log10_ecorr])) * ones
+        getphi.params = params
+        
+        return matrix.VariableGP(matrix.NoiseMatrix1D_var(getphi), Umat)
+
+def makegp_erm(psr, fref=1400.0, noisedict={}):
+    log10_erm = f'{psr.name}_log10_erm'
+    params = [log10_erm]
+
+    rotation_factor = (fref / psr.freqs)**2
+    bins = quantize(psr.toas)
+    Umat = np.vstack([(bins == i) * rotation_factor for i in range(bins.max() + 1)]).T
+    # observations = psr.obsnames
+    # Umat = np.vstack([(observations == obs) * rotation_factor for obs in psr.obsnames_unique]).T
+    ones = np.ones(Umat.shape[1], dtype=np.float64)
+
+    if all(par in noisedict for par in params):
+        phi = (10.0**(2.0 * noisedict[log10_erm])) * ones
+
+        return matrix.ConstantGP(matrix.NoiseMatrix1D_novar(phi), Umat)
+    else:
+        ones = matrix.jnparray(ones)
+        def getphi(params):
+            return (10.0**(2.0 * params[log10_erm])) * ones
         getphi.params = params
         
         return matrix.VariableGP(matrix.NoiseMatrix1D_var(getphi), Umat)

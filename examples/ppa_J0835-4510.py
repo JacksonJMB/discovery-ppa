@@ -34,8 +34,9 @@ import arviz
 psr = ds.Pulsar.read_feather('/DATA/CARINA_4/mit227/subband_PA_data/J0835-4510.PA.head_derot.minusSBmean.feather', json_metadata=False)
 
 m_RM = ds.PulsarLikelihood([psr.residuals,
-                         ds.makenoise_measurement_simple(psr),
-                         ds.makegp_ecorr_simple(psr),
+                         ds.makenoise_measurement(psr),
+                         ds.makegp_ecorr(psr),
+                         ds.makegp_erm(psr),
                          ds.makegp_fourier(psr, ds.powerlaw, components=30, fourierbasis=ds.fourierbasis_dm, name='rmgp')
                          ])
 
@@ -55,10 +56,14 @@ def numpyro_model():
     numpyro.factor('logl', logL(Params(raw, layout)))
 
 mcmc = infer.MCMC(infer.NUTS(numpyro_model), num_chains=4,
-                     num_warmup=25, num_samples=25)
+                     num_warmup=10, num_samples=10)
+print('Starting warmup')
 mcmc.warmup(jax.random.PRNGKey(42))
-            # init_params=)
-mcmc.run([jax.random.PRNGKey(43+i) for i in range(n_chains)])
+print('Warmup finished')
+print('Starting run')
+mcmc.run(mcmc.post_warmup_state.rng_key)
+print('Run finished')
+# mcmc.run([jax.random.PRNGKey(43+i) for i in range(n_chains)])
 
 samples = mcmc.get_samples()
 
@@ -84,4 +89,12 @@ for i, name in enumerate(logL.params):
 
 print(p_fit)
 print(f'{logL(p_fit):e}')
+
+figure = corner.corner(
+    np.array(raw_samples),
+    labels=logL.params
+    )
+
+plt.savefig(f"{fit_write_path}/{psr.name}_mcmc_corner_{timestamp}.pdf")
+plt.show()
 
