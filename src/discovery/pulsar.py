@@ -124,7 +124,8 @@ class Pulsar:
         setattr(self, 'mintoa', np.min(self.toas))
         setattr(self, 'maxtoa', np.max(self.toas))
 
-        setattr(self, 'obsnames_unique', pd.unique(self.obsnames))
+        if 'obsnames' in f.column_names:
+            setattr(self, 'obsnames_unique', pd.unique(self.obsnames))
 
         return self
 
