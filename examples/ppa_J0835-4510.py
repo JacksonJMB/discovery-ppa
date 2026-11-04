@@ -32,15 +32,17 @@ from numpyro import infer, distributions as dist
 import arviz
 
 psr = ds.Pulsar.read_feather('/DATA/CARINA_4/mit227/subband_PA_data/J0835-4510.PA.head_derot.minusSBmean.feather', json_metadata=False)
+psr.dist0 = 0.280 # kpc
 
-m_RM = ds.PulsarLikelihood([psr.residuals,
+m_aldm = ds.PulsarLikelihood([psr.residuals,
                          ds.makenoise_measurement(psr, tnequad=True, log_efac=True),
                          ds.makegp_ecorr(psr),
                          ds.makegp_erm(psr),
-                         ds.makegp_fourier(psr, ds.powerlaw, components=30, fourierbasis=ds.fourierbasis_dm, name='rmgp')
+                         ds.makegp_fourier(psr, ds.powerlaw, components=30, fourierbasis=ds.fourierbasis_dm, name='rmgp'),
+                         ds.makegp_aldm_psr(psr,-23.0)
                          ])
 
-logL = m_RM.logL
+logL = m_aldm.logL
 
 # static layout shared by every Params built inside the model
 layout, size = make_layout(logL.params)
@@ -58,10 +60,11 @@ def numpyro_model():
 mcmc = infer.MCMC(infer.NUTS(numpyro_model), num_chains=4,
                      num_warmup=100, num_samples=100)
 jax.debug.print('Starting warmup')
-mcmc.warmup(jax.random.PRNGKey(42))
-jax.debug.print('Warmup finished')
-jax.debug.print('Starting run')
-mcmc.run(mcmc.post_warmup_state.rng_key)
+# mcmc.warmup(jax.random.PRNGKey(42))
+# jax.debug.print('Warmup finished')
+# jax.debug.print('Starting run')
+# mcmc.run(mcmc.post_warmup_state.rng_key)
+mcmc.run(jax.random.PRNGKey(42))
 jax.debug.print('Run finished')
 # mcmc.run([jax.random.PRNGKey(43+i) for i in range(n_chains)])
 

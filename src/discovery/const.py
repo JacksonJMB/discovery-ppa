@@ -5,6 +5,10 @@ c = sc.speed_of_light
 G = sc.gravitational_constant
 h = sc.Planck
 
+hbar_in_eVs = sc.hbar*sc.value('joule-electron volt relationship')
+inv_cm_in_GeV = hbar_in_eVs*1e-9 * sc.c*1e2
+kpc_in_s = sc.parsec*1e3/sc.c
+
 yr = sc.Julian_year
 day = sc.day
 fyr = 1.0 / yr

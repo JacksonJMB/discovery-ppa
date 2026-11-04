@@ -4,6 +4,8 @@ import numpy as np
 import pandas as pd
 import pyarrow
 import pyarrow.feather
+from astropy import units as u
+from astropy.coordinates import SkyCoord
 
 def read_chain(fileordir):
     """Read a Discovery Feather chain or a PTMCMC chain directory to a Pandas table.
@@ -58,7 +60,7 @@ class Pulsar:
     # flags are done separately
 
     # what is _pdist, set in enterprise?
-    metadata = ['name', 'dm', 'dmx', 'pdist', 'pos', 'phi', 'theta', 'fitpars', 'setpars']
+    metadata = ['name', 'dm', 'dmx', 'pdist', 'pos', 'phi', 'theta', 'fitpars', 'setpars', 'dist0', 'parallax', 'parallaxerr', 'gal_lat', 'gal_lon']
 
     def __init__(self):
         pass
@@ -127,6 +129,13 @@ class Pulsar:
         if 'obsnames' in f.column_names:
             setattr(self, 'obsnames_unique', pd.unique(self.obsnames))
 
+        # if 'parallax' in f.column_names and 'parallaxerr' in f.column_names:
+        #     def dist_prior(dist):
+                
+        #         return 
+            
+        #     setattr(self, )
+
         return self
 
     to_list = lambda a: a.tolist() if isinstance(a, np.ndarray) else a
@@ -158,3 +167,9 @@ class Pulsar:
 
         pyarrow.feather.write_feather(pyarrow.Table.from_pydict(pydict, metadata={'json': json.dumps(meta)}),
                                       filename)
+
+
+    def set_coords(self, coords, parallax, DM):
+        # set coords from a SkyCoord object
+
+        setattr(self, 'coords', coords)

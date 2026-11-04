@@ -17,7 +17,7 @@ def uniform(par, a, b):
 
 
 priordict_standard = {
-    "(.*_)?efac_log10": [-1, 1],
+    "(.*_)?efac_log10": [-1,2],#[-1, 1],
     "(.*_)?efac": [0.1, 10],
     # "(.*_)?efac_log10": [-1, 1],
     "(.*_)?t2equad": [-3.5, -1.5],#[-8.5, -5],
@@ -51,12 +51,14 @@ priordict_standard = {
     "(.*_)?chrom_gp_gamma": [0, 7],
     "(.*_)?chrom_gp_alpha": [2.5, 14],  # scattering noise. Should be steeper than DM
 
-    "(.*_)?rmgp_log10_A": [-9, -7],
-    "(.*_)?rmgp_gamma": [0, 2],
-    "(.*_)?rm_gp_log10_A": [-9, -7],
-    "(.*_)?rm_gp_gamma": [0, 2],
+    "(.*_)?rmgp_log10_A": [-14, -5],#[-9, -7],
+    "(.*_)?rmgp_gamma": [0, 7],#[0, 2],
+    "(.*_)?rm_gp_log10_A": [-14, -5],#[-9, -7],
+    "(.*_)?rm_gp_gamma": [0, 7],#[0, 2],
 
     "(.*_)?log10_erm": [-4, -0.5],
+
+    "log10_Sa": [-8,2],
 
     "crn_log10_rho": [-9, -4],
     "gw_(.*_)?log10_rho": [-9, -4],
