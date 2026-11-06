@@ -23,7 +23,7 @@ priordict_standard = {
     "(.*_)?t2equad": [-3.5, -1.5],#[-8.5, -5],
     "(.*_)?tnequad": [-4, -1.5],#[-8.5, -5],
     "(.*_)?log10_ecorr": [-3, -1],#[-8.5, -5],
-    "(.*_)?rednoise_log10_A.*": [-10, -8],#[-20, -11],
+    "(.*_)?rednoise_log10_A.*": [-14,-5],#[-10, -8],#[-20, -11],
     "(.*_)?rednoise_gamma.*": [0, 7],
     "(.*_)?rednoise_log10_fb.*": [-9, -6],
     "(.*_)?red_noise_log10_A.*": [-20, -11],  # deprecated
@@ -282,3 +282,5 @@ def sample_uniform(params, priordict={}, n=1, fail=True):
                 raise KeyError(f"No known prior for {par}.")
 
     return sample
+
+def getprior_aldm(pa)

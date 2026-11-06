@@ -6,6 +6,9 @@ import pyarrow
 import pyarrow.feather
 from astropy import units as u
 from astropy.coordinates import SkyCoord
+from astropy.table import Table
+from psrqpy import QueryATNF
+from scipy.integrate import quad
 
 def read_chain(fileordir):
     """Read a Discovery Feather chain or a PTMCMC chain directory to a Pandas table.
@@ -60,7 +63,7 @@ class Pulsar:
     # flags are done separately
 
     # what is _pdist, set in enterprise?
-    metadata = ['name', 'dm', 'dmx', 'pdist', 'pos', 'phi', 'theta', 'fitpars', 'setpars', 'dist0', 'parallax', 'parallaxerr', 'gal_lat', 'gal_lon']
+    metadata = ['name', 'dm', 'dmx', 'pdist', 'pos', 'phi', 'theta', 'fitpars', 'setpars', 'parallax', 'parallaxerr', 'gal_lat', 'gal_lon']
 
     def __init__(self):
         pass
@@ -169,7 +172,41 @@ class Pulsar:
                                       filename)
 
 
-    def set_coords(self, coords, parallax, DM):
-        # set coords from a SkyCoord object
+    def set_position_from_ATNF(self):
+        # sets distance and galactic coords from the ATNF pulsar catalogue
+        query = QueryATNF()
+        catalogue = query.catalogue[['JNAME', 'GL', 'GB', 'DIST', 'DIST_A', 'DIST_A_ERR', 'DIST_AMN', 'DIST_AMX', 'PX', 'PX_ERR']]
+        cat_jnames = catalogue['JNAME']
+        table = Table.from_pandas(catalogue[cat_jnames == self.name])
 
-        setattr(self, 'coords', coords)
+        gal_lon = table['GL'][0]
+        gal_lat = table['GB'][0]
+        dist0 = table['DIST'][0]
+        print(table['PX_ERR'][0])
+
+        unit_xyz_coord = SkyCoord(l=gal_lon, b=gal_lat, distance=1, frame='galactic', unit=(u.deg,u.deg,u.kpc))
+        unit_xyz = np.array([unit_xyz_coord.cartesian.x.value,unit_xyz_coord.cartesian.y.value,unit_xyz_coord.cartesian.z.value])
+
+        setattr(self, 'gal_lon', gal_lon)
+        setattr(self, 'gal_lat', gal_lat)
+        setattr(self, 'pdist', dist0)
+        setattr(self, 'unit_xyz', unit_xyz)
+
+        if self.name == 'J0835-4510':
+            parallax = table['PX'][0]
+            e_parallax = table['PX_ERR'][0]
+            def ln_diststar_prior_no_const(diststar):
+                if diststar <= 0:
+                    return 0
+                else:
+                    e_diststar = dist0 * e_parallax
+                    return -0.5 * ((1.0/diststar-1.0)/e_diststar)**2.0 - 2.0*np.log(diststar)
+            
+            # From https://github.com/XueXiao-Physics/PPA/blob/main/ppa/priors.py
+            diststar_prior = lambda x : np.exp(ln_diststar_prior_no_const(x))
+            const = quad(diststar_prior, 0, 10)[0] 
+            ln_diststar_prior = lambda x : ln_diststar_prior_no_const(x) - np.log(const)
+
+            setattr(self, 'ln_diststar_prior', ln_diststar_prior)
+
+
