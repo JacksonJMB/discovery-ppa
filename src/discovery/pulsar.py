@@ -182,7 +182,6 @@ class Pulsar:
         gal_lon = table['GL'][0]
         gal_lat = table['GB'][0]
         dist0 = table['DIST'][0]
-        print(table['PX_ERR'][0])
 
         unit_xyz_coord = SkyCoord(l=gal_lon, b=gal_lat, distance=1, frame='galactic', unit=(u.deg,u.deg,u.kpc))
         unit_xyz = np.array([unit_xyz_coord.cartesian.x.value,unit_xyz_coord.cartesian.y.value,unit_xyz_coord.cartesian.z.value])
@@ -196,17 +195,19 @@ class Pulsar:
             parallax = table['PX'][0]
             e_parallax = table['PX_ERR'][0]
             def ln_diststar_prior_no_const(diststar):
-                if diststar <= 0:
-                    return 0
-                else:
-                    e_diststar = dist0 * e_parallax
-                    return -0.5 * ((1.0/diststar-1.0)/e_diststar)**2.0 - 2.0*np.log(diststar)
+                # if diststar <= 0:
+                #     return 0
+                # else:
+                e_diststar = dist0 * e_parallax
+                return -0.5 * ((1.0/diststar-1.0)/e_diststar)**2.0 - 2.0*np.log(diststar)
             
             # From https://github.com/XueXiao-Physics/PPA/blob/main/ppa/priors.py
-            diststar_prior = lambda x : np.exp(ln_diststar_prior_no_const(x))
-            const = quad(diststar_prior, 0, 10)[0] 
+            diststar_prior_no_const = lambda x : np.exp(ln_diststar_prior_no_const(x))
+            const = quad(diststar_prior_no_const, 0, 10)[0] 
             ln_diststar_prior = lambda x : ln_diststar_prior_no_const(x) - np.log(const)
+            diststar_prior = lambda x : diststar_prior_no_const(x)/const
 
             setattr(self, 'ln_diststar_prior', ln_diststar_prior)
+            setattr(self, 'diststar_prior', diststar_prior)
 
 

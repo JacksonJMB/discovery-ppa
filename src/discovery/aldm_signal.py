@@ -45,9 +45,9 @@ def get_psr_fmat_aldm(psr, axion_mass):
 #     phi_cc = 1.0 + np.sinc(y_pq)
 
 def makegp_aldm_psr(psr, log10_ma, v=1e-3, common=[], name='aldmGP'):
-    diststar_param = f'{psr.name}_diststar'
+    # diststar_param = f'{psr.name}_diststar'
     log10_Sa = 'log10_Sa'
-    params = [diststar_param, log10_Sa]
+    params = [log10_Sa]#, diststar_param]
 
     ma = 10.0**log10_ma
     omega, fmat = get_psr_fmat_aldm(psr, ma)
@@ -58,10 +58,15 @@ def makegp_aldm_psr(psr, log10_ma, v=1e-3, common=[], name='aldmGP'):
     #     phi_sc = 0.0
     #     phi_cs = -phi_sc
     #     return 10**(2.0*params['log10_Sa']) * np.array([[phi_cc, phi_cs], [phi_sc, phi_cc]], dtype=np.float64)
+    # def getphi(params):
+    #     distance = params[diststar_param] * psr.pdist
+    #     y_ep = params[diststar_param] * psr.pdist / get_coherence_length(v, ma)
+    #     angle = omega * distance * const.kpc_in_s
+    #     phi_cc = 2.0 - 2.0 * np.sinc(y_ep) * np.cos(angle)  # = phi_ss. For a single pulsar, we have y_{pq}=0
+    #     return 10**(2.0*params[log10_Sa]) * np.array([phi_cc, phi_cc], dtype=np.float64)
     def getphi(params):
-        distance = params[diststar_param] * psr.pdist
-        y_ep = params[diststar_param] * psr.pdist / get_coherence_length(v, ma)
-        angle = omega * distance * const.kpc_in_s
+        y_ep = psr.pdist / get_coherence_length(v, ma)
+        angle = omega * psr.pdist * const.kpc_in_s
         phi_cc = 2.0 - 2.0 * np.sinc(y_ep) * np.cos(angle)  # = phi_ss. For a single pulsar, we have y_{pq}=0
         return 10**(2.0*params[log10_Sa]) * np.array([phi_cc, phi_cc], dtype=np.float64)
     getphi.params = params

@@ -197,3 +197,31 @@ def run_nuts_with_checkpoints(
         rng_key, _ = jax.random.split(rng_key)
 
     return df
+
+
+class DiststarPriors(dist.Distribution):
+    support = dist.constraints.positive
+    def __init__(self, psrs):
+        self.psrs = psrs
+        super().__init__(batch_shape=jnp.shape(psrs), event_shape=())
+
+    def sample(self, key, sample_shape=()):
+        raise NotImplementedError
+
+    def log_prob(self, diststar):
+        return jnp.array([psr.ln_diststar_prior(diststar) for psr in psrs])
+
+
+class UniformAndDiststarPriors(dist.Distribution):
+    def __init__(self, low, high, psrs):
+        self.low = low
+        self.high = high
+        self.psrs = psrs
+        super().__init__(batch_shape=jnp.shape(psrs), event_shape=())
+
+    def sample(self, key, sample_shape=()):
+        raise NotImplementedError
+
+    def log_prob(self, values):
+
+        return jnp.append(dist.Uniform(low,high).log_prob(values), DiststarPriors(psrs).log_prob(values))

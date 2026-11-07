@@ -282,5 +282,3 @@ def sample_uniform(params, priordict={}, n=1, fail=True):
                 raise KeyError(f"No known prior for {par}.")
 
     return sample
-
-def getprior_aldm(pa)

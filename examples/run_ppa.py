@@ -58,14 +58,14 @@ os.mkdir(run_write_path)
 
 with open(f'{run_write_path}/axion_lims.csv', 'w', newline='', encoding="utf-8") as f:
     writer = csv.writer(f)
-    writer.writerow(['log10(Axion mass/eV)', 
-                     'log10(95% UB on axion PA amplitude/rad)', 
-                     'log10(95% UB on axion-photon coupling/GeV^-1)'
+    writer.writerow(['Axion mass (eV)', 
+                     '95% UB on axion PA amplitude (rad)', 
+                     '95% UB on axion-photon coupling (GeV^-1)'
                      ])
 
 min_mass = ds.const.hbar_in_eVs * 2*np.pi / (psr.toas[-1] - psr.toas[0])
 # log10_axion_mass_list = [np.log10((i+1)*min_mass) for i in range(100)]
-log10_axion_mass_list = np.linspace(-23,-20,31)
+log10_axion_mass_list = np.linspace(-24,-23,10,endpoint=False)
 
 first_mass = True
 for log10_axion_mass in log10_axion_mass_list:
@@ -121,7 +121,7 @@ for log10_axion_mass in log10_axion_mass_list:
         )
     plt.savefig(f"{run_write_path}/mcmc_samples_{str(axion_mass)}.pdf")
 
-    log10_Sa_samples = raw_samples[:, 1]
+    log10_Sa_samples = raw_samples[:, -1]
     log10_Sa_95 = np.percentile(log10_Sa_samples, 95)
     print(f'95th percentile of log10(S_a/rad):   {log10_Sa_95}')
     Sa_95 = 10**np.percentile(log10_Sa_samples, 95)
